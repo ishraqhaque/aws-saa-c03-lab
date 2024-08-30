@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 <bucket-name> <number-of-files> <file-size>"
+    echo "Example: $0 my-bucket 10 1M"
+    exit 1
+fi
+
+# Assign command-line arguments to variables
+BUCKET_NAME=$1
+NUM_FILES=$2
+FILE_SIZE=$3
+
+# Function to generate random files and upload them to S3 using s3api
+generate_and_upload_files() {
+    for i in $(seq 1 $NUM_FILES); do
+        FILE_NAME="random_file_$i.dat"
+        echo "Generating file $FILE_NAME of size $FILE_SIZE..."
+        
+        # Generate a random file
+        dd if=/dev/urandom of="$FILE_NAME" bs="$FILE_SIZE" count=1 status=none
+        
+        # Upload the file to the specified S3 bucket using s3api and suppress output
+        echo "Uploading $FILE_NAME to s3://$BUCKET_NAME..."
+        RESPONSE=$(aws s3api put-object --bucket "$BUCKET_NAME" --key "$FILE_NAME" --body "$FILE_NAME" --output json)
+        
+        # Check if the upload was successful
+        if [ $? -eq 0 ]; then
+            # Optionally, parse and display the ETag and ServerSideEncryption from the response
+            ETag=$(echo "$RESPONSE" | jq -r '.ETag')
+            Encryption=$(echo "$RESPONSE" | jq -r '.ServerSideEncryption')
+            echo "File $FILE_NAME uploaded successfully with ETag: $ETag and ServerSideEncryption: $Encryption."
+        else
+            echo "Error: Failed to upload $FILE_NAME."
+            exit 1
+        fi
+        
+        # Clean up the local file
+        rm -f "$FILE_NAME"
+    done
+}
+
+# Main script execution
+generate_and_upload_files

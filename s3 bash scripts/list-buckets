@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# Function to list all S3 buckets
+list_buckets() {
+    echo "Listing all S3 buckets using s3api..."
+    aws s3api list-buckets --query "Buckets[].Name" --output text
+    if [ $? -eq 0 ]; then
+        echo "S3 buckets listed successfully."
+    else
+        echo "Error: Failed to list S3 buckets."
+        exit 1
+    fi
+}
+
+# Main script execution
+list_buckets

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <bucket-name>"
+    exit 1
+fi
+
+# Assign command-line argument to a variable
+BUCKET_NAME=$1
+
+# Function to empty the S3 bucket
+empty_bucket() {
+    echo "Emptying bucket '$BUCKET_NAME'..."
+    aws s3 rm s3://"$BUCKET_NAME" --recursive
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to empty the bucket."
+        exit 1
+    fi
+}
+
+# Function to delete the S3 bucket
+delete_bucket() {
+    echo "Deleting bucket '$BUCKET_NAME'..."
+    aws s3api delete-bucket --bucket "$BUCKET_NAME"
+    if [ $? -eq 0 ]; then
+        echo "Bucket '$BUCKET_NAME' deleted successfully."
+    else
+        echo "Error: Failed to delete bucket."
+        exit 1
+    fi
+}
+
+# Main script execution
+empty_bucket
+delete_bucket

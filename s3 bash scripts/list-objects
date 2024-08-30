@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <bucket-name>"
+    exit 1
+fi
+
+# Assign command-line argument to a variable
+BUCKET_NAME=$1
+
+# Function to list objects in the S3 bucket
+list_objects() {
+    echo "Listing objects in bucket '$BUCKET_NAME'..."
+    
+    # Use s3api to list objects in the bucket
+    aws s3api list-objects-v2 --bucket "$BUCKET_NAME" --query "Contents[].{Key: Key, Size: Size}" --output table
+    
+    if [ $? -eq 0 ]; then
+        echo "Objects listed successfully."
+    else
+        echo "Error: Failed to list objects."
+        exit 1
+    fi
+}
+
+# Main script execution
+list_objects

@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 4 ]; then
+    echo "Usage: $0 <bucket-name> <number-of-files> <file-size> <local-directory>"
+    echo "Example: $0 my-bucket 10 1M /tmp/random-files"
+    exit 1
+fi
+
+# Assign command-line arguments to variables
+BUCKET_NAME=$1
+NUM_FILES=$2
+FILE_SIZE=$3
+LOCAL_DIR=$4
+
+# Function to generate random files in the specified local directory
+generate_random_files() {
+    mkdir -p "$LOCAL_DIR"
+    for i in $(seq 1 $NUM_FILES); do
+        FILE_NAME="$LOCAL_DIR/random_file_$i.dat"
+        echo "Generating file $FILE_NAME of size $FILE_SIZE..."
+        
+        # Generate a random file
+        dd if=/dev/urandom of="$FILE_NAME" bs="$FILE_SIZE" count=1 status=none
+        
+        if [ $? -eq 0 ]; then
+            echo "File $FILE_NAME generated successfully."
+        else
+            echo "Error: Failed to generate $FILE_NAME."
+            exit 1
+        fi
+    done
+}
+
+# Function to sync the local directory to the S3 bucket
+sync_to_s3() {
+    echo "Syncing files from $LOCAL_DIR to s3://$BUCKET_NAME/..."
+    aws s3 sync "$LOCAL_DIR" s3://"$BUCKET_NAME"/
+    if [ $? -eq 0 ]; then
+        echo "Files synced successfully to s3://$BUCKET_NAME/."
+    else
+        echo "Error: Failed to sync files to S3."
+        exit 1
+    fi
+}
+
+# Main script execution
+generate_random_files
+sync_to_s3
